@@ -23,7 +23,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+
+      - name: Cache cargo registry and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name:
+        run: cargo install cargo-nextest --locked
+
       - name: Build
-        run: cargo build --verbose
-      - name: Run tests
-        run: cargo test --verbose
+        run: cargo build --locked
+
+      - name: Test
+        run: cargo nextest run
