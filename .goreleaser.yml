@@ -1,0 +1,36 @@
+version: 2
+
+builds:
+  - builder: rust
+    id: win-tools
+    binary: win-tools
+    targets:
+      - x86_64-pc-windows-msvc
+    flags:
+      - --locked
+
+archives:
+  - id: win-tools
+    builds: [ win-tools ]
+    name_template: "win-tools_{{ .Version }}_windows_amd64"
+    formats: [ zip ]
+    files:
+      - src: LICENSE
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  draft: false
+  prerelease: auto
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch

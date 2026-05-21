@@ -372,7 +372,7 @@ unsafe extern "system" fn wnd_proc(
                 let sy = ((lparam.0 >> 16) & 0xffff) as i16 as i32;
                 let lx = sx - wrc.left;
                 let ly = sy - wrc.top;
-                if ly >= 0 && ly < TITLE_H && lx < (wrc.right - wrc.left) - 50 {
+                if (0..TITLE_H).contains(&ly) && lx < (wrc.right - wrc.left) - 50 {
                     return LRESULT(HTCAPTION as isize);
                 }
             }
