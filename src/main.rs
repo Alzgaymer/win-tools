@@ -137,12 +137,8 @@ unsafe fn enumerate_monitors() -> Vec<MonitorInfo> {
                 let (tx, rx) = mpsc::channel::<u32>();
                 let handle_raw = pm.hPhysicalMonitor.0 as usize;
                 std::thread::spawn(move || {
-                    loop {
-                        // Block until at least one value arrives.
-                        let mut val = match rx.recv() {
-                            Ok(v) => v,
-                            Err(_) => break, // sender dropped → window closed
-                        };
+                    while let Ok(v) = rx.recv() {
+                        let mut val = v;
                         // Drain any values queued during the last DDC/CI call;
                         // only apply the most recent one.
                         while let Ok(v) = rx.try_recv() {
