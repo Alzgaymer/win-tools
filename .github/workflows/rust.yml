@@ -5,23 +5,37 @@ on:
 
   push:
     branches: [ "main" ]
+    tags: [ "v*" ]
     paths:
-      - "*.rs"
+      - "**/*.rs"
       - Cargo.lock
       - Cargo.toml
+      - .github/workflows/rust.yml
 
   pull_request:
     branches: [ "main" ]
     paths:
-      - "*.rs"
+      - "**/*.rs"
       - Cargo.lock
       - Cargo.toml
+      - .github/workflows/rust.yml
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-D warnings"
 
 jobs:
-  build:
+  fmt:
+    name: Format
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+  clippy:
+    name: Clippy
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
@@ -37,7 +51,35 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Install cargo tool
+      - name: Clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+  build-and-test:
+    name: Build & Test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+
+      - name: Cache cargo registry and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Cache cargo-nextest binary
+        id: cache-nextest
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-nextest.exe
+          key: cargo-bin-${{ runner.os }}-nextest-0.9
+
+      - name: Install cargo-nextest
+        if: steps.cache-nextest.outputs.cache-hit != 'true'
         run: cargo install cargo-nextest --locked
 
       - name: Build
@@ -45,3 +87,62 @@ jobs:
 
       - name: Test
         run: cargo nextest run
+
+  audit:
+    name: Security Audit
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+
+      - name: Cache advisory database
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/advisory-db
+          key: cargo-audit-db-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            cargo-audit-db-${{ runner.os }}-
+
+      - name: Cache cargo-audit binary
+        id: cache-audit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-audit.exe
+          key: cargo-bin-${{ runner.os }}-audit-0.21
+
+      - name: Install cargo-audit
+        if: steps.cache-audit.outputs.cache-hit != 'true'
+        run: cargo install cargo-audit --locked
+
+      - name: Audit dependencies
+        run: cargo audit
+
+  release:
+    name: Release
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [ fmt, clippy, build-and-test ]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+        with:
+          fetch-depth: 0
+
+      - name: Cache cargo registry and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
