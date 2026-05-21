@@ -4,70 +4,71 @@
 use std::sync::mpsc::{self, Sender};
 
 use windows::{
-    core::{w, BOOL as CoreBOOL},
     Win32::{
         Devices::Display::{
-            DestroyPhysicalMonitors, GetMonitorBrightness,
-            GetNumberOfPhysicalMonitorsFromHMONITOR, GetPhysicalMonitorsFromHMONITOR,
-            SetMonitorBrightness, PHYSICAL_MONITOR,
+            DestroyPhysicalMonitors, GetMonitorBrightness, GetNumberOfPhysicalMonitorsFromHMONITOR,
+            GetPhysicalMonitorsFromHMONITOR, PHYSICAL_MONITOR, SetMonitorBrightness,
         },
-        Foundation::{COLORREF, HANDLE, HINSTANCE, HWND, LPARAM, LRESULT, RECT, WIN32_ERROR, WPARAM},
-        System::Registry::{
-            RegCloseKey, RegDeleteValueW, RegOpenKeyExW, RegSetValueExW,
-            HKEY, HKEY_CURRENT_USER, KEY_SET_VALUE, REG_SZ,
+        Foundation::{
+            COLORREF, HANDLE, HINSTANCE, HWND, LPARAM, LRESULT, RECT, WIN32_ERROR, WPARAM,
         },
         Graphics::Gdi::{
-            BeginPaint, CreateFontW, CreateSolidBrush, DeleteObject, Ellipse, EndPaint,
-            EnumDisplayMonitors, FillRect, GetStockObject, HDC, HFONT, HMONITOR,
-            InvalidateRect, NULL_PEN, RoundRect, SelectObject, SetBkMode, SetTextColor,
-            TextOutW, BACKGROUND_MODE, CLIP_DEFAULT_PRECIS, DEFAULT_CHARSET, DEFAULT_PITCH,
-            DEFAULT_QUALITY, FF_DONTCARE, OUT_DEFAULT_PRECIS, PAINTSTRUCT,
+            BACKGROUND_MODE, BeginPaint, CLIP_DEFAULT_PRECIS, CreateFontW, CreateSolidBrush,
+            DEFAULT_CHARSET, DEFAULT_PITCH, DEFAULT_QUALITY, DeleteObject, Ellipse, EndPaint,
+            EnumDisplayMonitors, FF_DONTCARE, FillRect, GetStockObject, HDC, HFONT, HMONITOR,
+            InvalidateRect, NULL_PEN, OUT_DEFAULT_PRECIS, PAINTSTRUCT, RoundRect, SelectObject,
+            SetBkMode, SetTextColor, TextOutW,
         },
         System::LibraryLoader::GetModuleHandleW,
+        System::Registry::{
+            HKEY, HKEY_CURRENT_USER, KEY_SET_VALUE, REG_SZ, RegCloseKey, RegDeleteValueW,
+            RegOpenKeyExW, RegSetValueExW,
+        },
         UI::{
             Input::KeyboardAndMouse::{
-                MOD_ALT, MOD_NOREPEAT, RegisterHotKey, ReleaseCapture, SetCapture,
-                UnregisterHotKey,
+                MOD_ALT, MOD_NOREPEAT, RegisterHotKey, ReleaseCapture, SetCapture, UnregisterHotKey,
             },
             WindowsAndMessaging::{
-                CreateWindowExW, DefWindowProcW, DispatchMessageW, MessageBoxW,
-                MB_ICONERROR, MB_ICONINFORMATION, MB_OK,
-                GetClientRect, GetMessageW, GetSystemMetrics, GetWindowLongPtrW,
-                GetWindowRect, PostQuitMessage, RegisterClassW, SetLayeredWindowAttributes,
-                SetWindowLongPtrW, SetWindowPos, ShowWindow, TranslateMessage,
-                CS_HREDRAW, CS_VREDRAW, GWLP_USERDATA, HTCAPTION, HTCLIENT,
-                IsWindowVisible, LWA_ALPHA, MSG, SetForegroundWindow, SM_CXSCREEN,
-                SM_CYSCREEN, SW_HIDE, SW_SHOW, SWP_NOMOVE,
-                SWP_NOSIZE, SWP_NOZORDER, WNDCLASSW, WS_EX_LAYERED, WS_POPUP,
-                WM_DESTROY, WM_HOTKEY, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE,
-                WM_NCHITTEST, WM_PAINT,
+                CS_HREDRAW, CS_VREDRAW, CreateWindowExW, DefWindowProcW, DispatchMessageW,
+                GWLP_USERDATA, GetClientRect, GetMessageW, GetSystemMetrics, GetWindowLongPtrW,
+                GetWindowRect, HTCAPTION, HTCLIENT, IsWindowVisible, LWA_ALPHA, MB_ICONERROR,
+                MB_ICONINFORMATION, MB_OK, MSG, MessageBoxW, PostQuitMessage, RegisterClassW,
+                SM_CXSCREEN, SM_CYSCREEN, SW_HIDE, SW_SHOW, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
+                SetForegroundWindow, SetLayeredWindowAttributes, SetWindowLongPtrW, SetWindowPos,
+                ShowWindow, TranslateMessage, WM_DESTROY, WM_HOTKEY, WM_LBUTTONDOWN, WM_LBUTTONUP,
+                WM_MOUSEMOVE, WM_NCHITTEST, WM_PAINT, WNDCLASSW, WS_EX_LAYERED, WS_POPUP,
             },
         },
     },
+    core::{BOOL as CoreBOOL, w},
 };
 
 // Colors — stored as BGR (Windows GDI format)
-const BG: u32       = 0x1e0f0f;
+const BG: u32 = 0x1e0f0f;
 const TITLEBAR: u32 = 0x3e1a1a;
-const ACCENT: u32   = 0xf16363;
-const TRACK: u32    = 0x4e2d2d;
-const TEXT: u32     = 0xf8f0f0;
-const DIMTXT: u32   = 0xb8a394;
-const WHITE: u32    = 0xffffff;
+const ACCENT: u32 = 0xf16363;
+const TRACK: u32 = 0x4e2d2d;
+const TEXT: u32 = 0xf8f0f0;
+const DIMTXT: u32 = 0xb8a394;
+const WHITE: u32 = 0xffffff;
 
 // Layout constants (px)
 const HOTKEY_ID: i32 = 1;
 
-const WIN_W: i32   = 420;
+const WIN_W: i32 = 420;
 const TITLE_H: i32 = 50;
-const SECT_H: i32  = 110;
-const PAD: i32     = 20;
-const SLX0: i32    = PAD + 10;
+const SECT_H: i32 = 110;
+const PAD: i32 = 20;
+const SLX0: i32 = PAD + 10;
 const THUMB_R: i32 = 10;
-const TRK_H: i32   = 8;
+const TRK_H: i32 = 8;
 
-fn slx1(w: i32) -> i32 { w - PAD - 10 }
-fn thumb_x(bri: u32, x0: i32, x1: i32) -> i32 { x0 + (bri as i32 * (x1 - x0)) / 100 }
+fn slx1(w: i32) -> i32 {
+    w - PAD - 10
+}
+fn thumb_x(bri: u32, x0: i32, x1: i32) -> i32 {
+    x0 + (bri as i32 * (x1 - x0)) / 100
+}
 fn bri_from_x(cx: i32, x0: i32, x1: i32) -> u32 {
     ((cx - x0).max(0).min(x1 - x0) * 100 / (x1 - x0).max(1)).max(1) as u32
 }
@@ -107,7 +108,8 @@ unsafe extern "system" fn enum_monitor_cb(
 unsafe fn enumerate_monitors() -> Vec<MonitorInfo> {
     let mut hmons: Vec<HMONITOR> = Vec::new();
     EnumDisplayMonitors(
-        None, None,
+        None,
+        None,
         Some(enum_monitor_cb),
         LPARAM(&mut hmons as *mut _ as isize),
     );
@@ -147,10 +149,7 @@ unsafe fn enumerate_monitors() -> Vec<MonitorInfo> {
                             val = v;
                         }
                         unsafe {
-                            SetMonitorBrightness(
-                                HANDLE(handle_raw as *mut core::ffi::c_void),
-                                val,
-                            );
+                            SetMonitorBrightness(HANDLE(handle_raw as *mut core::ffi::c_void), val);
                         }
                     }
                 });
@@ -184,9 +183,14 @@ unsafe fn draw_text(hdc: HDC, text: &str, x: i32, y: i32, color: u32) {
 
 unsafe fn make_font(size: i32, bold: bool) -> HFONT {
     CreateFontW(
-        size, 0, 0, 0,
+        size,
+        0,
+        0,
+        0,
         if bold { 600 } else { 400 },
-        0, 0, 0,
+        0,
+        0,
+        0,
         DEFAULT_CHARSET,
         OUT_DEFAULT_PRECIS,
         CLIP_DEFAULT_PRECIS,
@@ -220,7 +224,12 @@ unsafe fn on_paint(hwnd: HWND, state: &AppState) {
     DeleteObject(bg_br.into());
 
     let tb_br = CreateSolidBrush(COLORREF(TITLEBAR));
-    let title_rect = RECT { left: 0, top: 0, right: w, bottom: TITLE_H };
+    let title_rect = RECT {
+        left: 0,
+        top: 0,
+        right: w,
+        bottom: TITLE_H,
+    };
     FillRect(hdc, &title_rect, tb_br);
     DeleteObject(tb_br.into());
 
@@ -278,12 +287,17 @@ unsafe fn on_paint(hwnd: HWND, state: &AppState) {
 // ── Window procedure ──────────────────────────────────────────────────────────
 
 unsafe extern "system" fn wnd_proc(
-    hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM,
+    hwnd: HWND,
+    msg: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
 ) -> LRESULT {
     match msg {
         WM_PAINT => {
             let ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut AppState;
-            if !ptr.is_null() { on_paint(hwnd, &*ptr); }
+            if !ptr.is_null() {
+                on_paint(hwnd, &*ptr);
+            }
             LRESULT(0)
         }
 
@@ -342,7 +356,9 @@ unsafe extern "system" fn wnd_proc(
 
         WM_LBUTTONUP => {
             let ptr = GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut AppState;
-            if !ptr.is_null() { (*ptr).dragging = None; }
+            if !ptr.is_null() {
+                (*ptr).dragging = None;
+            }
             ReleaseCapture();
             LRESULT(0)
         }
@@ -419,41 +435,80 @@ unsafe fn install() {
     let exe = match std::env::current_exe() {
         Ok(p) => p,
         Err(_) => {
-            MessageBoxW(None, w!("Could not get executable path."), w!("BrightnessCtrl"), MB_OK | MB_ICONERROR);
+            MessageBoxW(
+                None,
+                w!("Could not get executable path."),
+                w!("BrightnessCtrl"),
+                MB_OK | MB_ICONERROR,
+            );
             return;
         }
     };
 
     // REG_SZ value: UTF-16 encoded path with null terminator, reinterpreted as bytes.
-    let wide: Vec<u16> = exe.to_string_lossy().encode_utf16().chain(Some(0)).collect();
+    let wide: Vec<u16> = exe
+        .to_string_lossy()
+        .encode_utf16()
+        .chain(Some(0))
+        .collect();
     let bytes = core::slice::from_raw_parts(wide.as_ptr() as *const u8, wide.len() * 2);
 
     let Some(hkey) = open_run_key() else {
-        MessageBoxW(None, w!("Could not open registry key."), w!("BrightnessCtrl"), MB_OK | MB_ICONERROR);
+        MessageBoxW(
+            None,
+            w!("Could not open registry key."),
+            w!("BrightnessCtrl"),
+            MB_OK | MB_ICONERROR,
+        );
         return;
     };
     let err = RegSetValueExW(hkey, w!("BrightnessCtrl"), None, REG_SZ, Some(bytes));
     RegCloseKey(hkey);
 
     if err == WIN32_ERROR(0) {
-        MessageBoxW(None, w!("Added to startup.\r\nPress Alt+B to show/hide the window."), w!("BrightnessCtrl"), MB_OK | MB_ICONINFORMATION);
+        MessageBoxW(
+            None,
+            w!("Added to startup.\r\nPress Alt+B to show/hide the window."),
+            w!("BrightnessCtrl"),
+            MB_OK | MB_ICONINFORMATION,
+        );
     } else {
-        MessageBoxW(None, w!("Failed to write registry value."), w!("BrightnessCtrl"), MB_OK | MB_ICONERROR);
+        MessageBoxW(
+            None,
+            w!("Failed to write registry value."),
+            w!("BrightnessCtrl"),
+            MB_OK | MB_ICONERROR,
+        );
     }
 }
 
 unsafe fn uninstall() {
     let Some(hkey) = open_run_key() else {
-        MessageBoxW(None, w!("Could not open registry key."), w!("BrightnessCtrl"), MB_OK | MB_ICONERROR);
+        MessageBoxW(
+            None,
+            w!("Could not open registry key."),
+            w!("BrightnessCtrl"),
+            MB_OK | MB_ICONERROR,
+        );
         return;
     };
     let err = RegDeleteValueW(hkey, w!("BrightnessCtrl"));
     RegCloseKey(hkey);
 
     if err == WIN32_ERROR(0) {
-        MessageBoxW(None, w!("Removed from startup."), w!("BrightnessCtrl"), MB_OK | MB_ICONINFORMATION);
+        MessageBoxW(
+            None,
+            w!("Removed from startup."),
+            w!("BrightnessCtrl"),
+            MB_OK | MB_ICONINFORMATION,
+        );
     } else {
-        MessageBoxW(None, w!("Not found in startup (may not have been installed)."), w!("BrightnessCtrl"), MB_OK | MB_ICONERROR);
+        MessageBoxW(
+            None,
+            w!("Not found in startup (may not have been installed)."),
+            w!("BrightnessCtrl"),
+            MB_OK | MB_ICONERROR,
+        );
     }
 }
 
@@ -461,8 +516,18 @@ unsafe fn uninstall() {
 
 fn main() {
     match std::env::args().nth(1).as_deref() {
-        Some("--install")   => { unsafe { install(); }   return; }
-        Some("--uninstall") => { unsafe { uninstall(); } return; }
+        Some("--install") => {
+            unsafe {
+                install();
+            }
+            return;
+        }
+        Some("--uninstall") => {
+            unsafe {
+                uninstall();
+            }
+            return;
+        }
         _ => {}
     }
 
@@ -502,8 +567,10 @@ fn main() {
             WS_POPUP,
             (sx - WIN_W) / 2,
             (sy - win_h) / 2,
-            WIN_W, win_h,
-            None, None,
+            WIN_W,
+            win_h,
+            None,
+            None,
             Some(hinstance),
             None,
         )
@@ -513,7 +580,16 @@ fn main() {
         SetLayeredWindowAttributes(hwnd, COLORREF(0), 245, LWA_ALPHA).ok();
         RegisterHotKey(Some(hwnd), HOTKEY_ID, MOD_ALT | MOD_NOREPEAT, b'B' as u32).ok();
         ShowWindow(hwnd, SW_SHOW);
-        SetWindowPos(hwnd, None, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER).ok();
+        SetWindowPos(
+            hwnd,
+            None,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER,
+        )
+        .ok();
 
         let mut msg = MSG::default();
         while GetMessageW(&mut msg, None, 0, 0).as_bool() {
