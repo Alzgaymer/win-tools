@@ -80,7 +80,10 @@ jobs:
 
       - name: Install cargo-nextest
         if: steps.cache-nextest.outputs.cache-hit != 'true'
-        run: cargo install cargo-nextest --locked
+        run: |
+          Invoke-WebRequest https://get.nexte.st/latest/windows -OutFile nextest.zip
+          Expand-Archive nextest.zip -DestinationPath ~/.cargo/bin -Force
+          Remove-Item nextest.zip
 
       - name: Build
         run: cargo build --locked
