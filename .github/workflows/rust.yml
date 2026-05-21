@@ -22,7 +22,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
 
@@ -37,7 +37,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name:
+      - name: Install cargo tool
         run: cargo install cargo-nextest --locked
 
       - name: Build
