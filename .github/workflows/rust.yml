@@ -1,0 +1,29 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "*.rs"
+      - Cargo.lock
+      - Cargo.toml
+
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "*.rs"
+      - Cargo.lock
+      - Cargo.toml
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+      - name: Build
+        run: cargo build --verbose
+      - name: Run tests
+        run: cargo test --verbose
