@@ -4,6 +4,7 @@ builds:
   - builder: rust
     id: win-tools
     binary: win-tools
+    tool: cargo
     targets:
       - x86_64-pc-windows-msvc
     flags:
@@ -11,7 +12,7 @@ builds:
 
 archives:
   - id: win-tools
-    builds: [ win-tools ]
+    ids: [ win-tools ]
     name_template: "win-tools_{{ .Version }}_windows_amd64"
     formats: [ zip ]
     files:
