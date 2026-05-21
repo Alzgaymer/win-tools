@@ -510,6 +510,39 @@ unsafe fn uninstall() {
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bri_from_x_maps_range() {
+        // left edge clamps to minimum 1
+        assert_eq!(bri_from_x(0, 0, 100), 1);
+        // right edge → 100
+        assert_eq!(bri_from_x(100, 0, 100), 100);
+        // midpoint → 50
+        assert_eq!(bri_from_x(50, 0, 100), 50);
+        // beyond right edge clamps to 100
+        assert_eq!(bri_from_x(200, 0, 100), 100);
+    }
+
+    #[test]
+    fn thumb_x_maps_brightness() {
+        assert_eq!(thumb_x(0, 0, 100), 0);
+        assert_eq!(thumb_x(100, 0, 100), 100);
+        assert_eq!(thumb_x(50, 0, 100), 50);
+    }
+
+    #[test]
+    fn bri_and_thumb_x_are_inverse() {
+        let (x0, x1) = (30, 430);
+        for bri in [1u32, 25, 50, 75, 100] {
+            let tx = thumb_x(bri, x0, x1);
+            assert_eq!(bri_from_x(tx, x0, x1), bri);
+        }
+    }
+}
+
 fn main() {
     match std::env::args().nth(1).as_deref() {
         Some("--install") => {
