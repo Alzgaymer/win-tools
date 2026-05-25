@@ -5,16 +5,18 @@ builds:
     id: win-tools
     binary: win-tools
     tool: cargo
+    command: build
     targets:
       - x86_64-pc-windows-msvc
     flags:
+      - --release
       - --locked
 
 archives:
   - id: win-tools
-    ids: [ win-tools ]
+    ids: [win-tools]
     name_template: "win-tools_{{ .Version }}_windows_amd64"
-    formats: [ zip ]
+    formats: [zip]
     files:
       - src: LICENSE
 
