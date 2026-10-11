@@ -9,6 +9,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
+            <SolidColorBrush x:Key="WinToolsFallbackBackgroundBrush" Color="#0F0F1E" />
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="SliderTrackValueFill" Color="#6363F1" />
@@ -18,7 +19,6 @@
                     <SolidColorBrush x:Key="SliderThumbBackgroundPointerOver" Color="#7878F3" />
                     <SolidColorBrush x:Key="SliderThumbBackgroundPressed" Color="#5555D8" />
                     <SolidColorBrush x:Key="WinToolsAccentTextBrush" Color="#8C8CF5" />
-                    <SolidColorBrush x:Key="WinToolsFallbackBackgroundBrush" Color="#0F0F1E" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>

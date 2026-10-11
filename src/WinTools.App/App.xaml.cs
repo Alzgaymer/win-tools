@@ -38,12 +38,18 @@ public partial class App : Application
     private async void Quit()
     {
         _hotkeys?.Dispose();
-        if (_flyout is not null)
+        try
         {
-            await _flyout.BrightnessSection.ReleaseAsync();
+            if (_flyout is not null)
+            {
+                await _flyout.BrightnessSection.ReleaseAsync();
+            }
         }
-        _tray?.Dispose();
-        _flyout?.CloseForQuit();
-        Exit();
+        finally
+        {
+            _tray?.Dispose();
+            _flyout?.CloseForQuit();
+            Exit();
+        }
     }
 }
