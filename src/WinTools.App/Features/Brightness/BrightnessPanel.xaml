@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WinTools.App.Features.Brightness.BrightnessPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:core="using:WinTools.Core.Brightness">
+    <StackPanel Spacing="16">
+        <TextBlock
+            x:Name="EmptyText"
+            Text="No external monitors found"
+            Visibility="Collapsed"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        <ItemsControl ItemsSource="{x:Bind Monitors}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="core:MonitorViewModel">
+                    <StackPanel Margin="0,0,0,12" Spacing="4">
+                        <Grid>
+                            <TextBlock
+                                Text="{x:Bind Name}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                TextTrimming="CharacterEllipsis"
+                                Margin="0,0,64,0" />
+                            <TextBlock
+                                Text="{x:Bind StatusText, Mode=OneWay}"
+                                HorizontalAlignment="Right"
+                                Foreground="{ThemeResource WinToolsAccentTextBrush}"
+                                Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        </Grid>
+                        <Slider
+                            Minimum="1"
+                            Maximum="100"
+                            StepFrequency="1"
+                            Value="{x:Bind Brightness, Mode=TwoWay}"
+                            IsEnabled="{x:Bind Supported}"
+                            AutomationProperties.Name="{x:Bind Name}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>
