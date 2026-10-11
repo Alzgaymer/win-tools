@@ -12,7 +12,7 @@ public partial class App : Application
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         _flyout = new FlyoutWindow();
-        _flyout.Activate();
         await _flyout.BrightnessSection.LoadAsync();
+        _flyout.ShowFlyout();
     }
 }

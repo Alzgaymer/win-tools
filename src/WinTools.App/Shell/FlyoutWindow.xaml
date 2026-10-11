@@ -6,6 +6,9 @@
     xmlns:brightness="using:WinTools.App.Features.Brightness"
     Title="WinTools">
     <Grid x:Name="Root">
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Key="Escape" Invoked="OnEscape" />
+        </Grid.KeyboardAccelerators>
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel x:Name="Body" Padding="16" Spacing="12" VerticalAlignment="Top">
                 <TextBlock Text="Monitor Brightness" Style="{StaticResource BodyStrongTextBlockStyle}" />
