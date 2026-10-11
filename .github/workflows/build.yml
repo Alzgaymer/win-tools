@@ -90,6 +90,13 @@ jobs:
           VERSION: ${{ steps.version.outputs.value }}
         run: dotnet publish src/WinTools.App -c Release -r win-x64 "-p:Version=$env:VERSION" -o artifacts/publish
 
+      - name: Verify application resources
+        shell: pwsh
+        run: |
+          if (-not (Test-Path artifacts/publish/resources.pri)) {
+            throw "The published app is missing resources.pri; WinUI cannot load the interface."
+          }
+
       - name: Locate or install Inno Setup
         shell: pwsh
         run: |
@@ -109,6 +116,12 @@ jobs:
         run: |
           & $env:ISCC "/DAppVersion=$env:VERSION" "/DPublishDir=$PWD\artifacts\publish" installer\win-tools.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Test installed app
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem artifacts/installer/*.exe | Select-Object -First 1
+          ./scripts/Test-InstalledApp.ps1 -InstallerPath $installer.FullName -InstallDirectory "$env:RUNNER_TEMP\WinTools-smoke"
 
       - name: Checksum
         shell: pwsh

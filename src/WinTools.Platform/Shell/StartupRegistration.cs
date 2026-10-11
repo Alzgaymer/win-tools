@@ -20,7 +20,7 @@ public static class StartupRegistration
             using var key = Registry.CurrentUser.CreateSubKey(RunKey);
             if (value)
             {
-                key.SetValue(ValueName, $"\"{Environment.ProcessPath}\"");
+                key.SetValue(ValueName, $"\"{Environment.ProcessPath}\" --startup");
             }
             else
             {
