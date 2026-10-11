@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="WinTools.App.Shell.TrayIcon"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:tb="using:H.NotifyIcon">
+    <tb:TaskbarIcon
+        x:Name="Tray"
+        ToolTipText="WinTools"
+        NoLeftClickDelay="True"
+        ContextMenuMode="SecondWindow">
+        <tb:TaskbarIcon.IconSource>
+            <tb:GeneratedIconSource Text="☀" Foreground="#6363F1" />
+        </tb:TaskbarIcon.IconSource>
+        <tb:TaskbarIcon.ContextFlyout>
+            <MenuFlyout AreOpenCloseAnimationsEnabled="False" Opening="OnMenuOpening">
+                <ToggleMenuFlyoutItem x:Name="StartupItem" Text="Start with Windows" Click="OnStartupClick" />
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Quit" Click="OnQuitClick" />
+            </MenuFlyout>
+        </tb:TaskbarIcon.ContextFlyout>
+    </tb:TaskbarIcon>
+</UserControl>
