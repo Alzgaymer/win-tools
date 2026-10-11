@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/WinTools.App/WinTools.App.csproj">
+      <Platform Project="x64" />
+    </Project>
     <Project Path="src/WinTools.Core/WinTools.Core.csproj" />
     <Project Path="src/WinTools.Platform/WinTools.Platform.csproj" />
   </Folder>
