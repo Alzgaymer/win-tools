@@ -54,3 +54,81 @@ jobs:
           $out = dotnet list src/WinTools.App package --vulnerable --include-transitive 2>&1 | Out-String
           Write-Output $out
           if ($out -match 'has the following vulnerable packages') { exit 1 }
+
+  package:
+    name: Package installer
+    needs: [ core-tests, app ]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+
+      - name: Compute version
+        id: version
+        shell: pwsh
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          $v = if ($env:REF_TYPE -eq 'tag') { $env:REF_NAME.TrimStart('v') } else { "0.0.0-ci.$env:RUN_NUMBER" }
+          "value=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Publish app
+        run: dotnet publish src/WinTools.App -c Release -r win-x64 -p:Version=${{ steps.version.outputs.value }} -o artifacts/publish
+
+      - name: Locate or install Inno Setup
+        shell: pwsh
+        run: |
+          $patterns = "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe", "$env:ProgramFiles\Inno Setup *\ISCC.exe"
+          $iscc = Get-ChildItem $patterns -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $iscc) {
+            choco install innosetup -y --no-progress
+            $iscc = Get-ChildItem $patterns -ErrorAction SilentlyContinue | Select-Object -First 1
+          }
+          if (-not $iscc) { throw "ISCC.exe not found" }
+          "ISCC=$($iscc.FullName)" >> $env:GITHUB_ENV
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & $env:ISCC "/DAppVersion=${{ steps.version.outputs.value }}" "/DPublishDir=$PWD\artifacts\publish" installer\win-tools.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Checksum
+        shell: pwsh
+        run: |
+          Get-ChildItem artifacts/installer/*.exe |
+            ForEach-Object { "$((Get-FileHash $_ -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
+            Set-Content artifacts/installer/checksums.txt
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: installer
+          path: artifacts/installer/
+          if-no-files-found: error
+
+  release:
+    name: Release
+    if: github.ref_type == 'tag'
+    needs: [ package ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: installer
+          path: installer
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          prerelease=""
+          if [[ "$TAG" == *-* ]]; then prerelease="--prerelease"; fi
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes $prerelease installer/*
