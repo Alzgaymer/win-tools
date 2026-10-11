@@ -74,11 +74,21 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           RUN_NUMBER: ${{ github.run_number }}
         run: |
-          $v = if ($env:REF_TYPE -eq 'tag') { $env:REF_NAME.TrimStart('v') } else { "0.0.0-ci.$env:RUN_NUMBER" }
+          if ($env:REF_TYPE -eq 'tag') {
+            if ($env:REF_NAME -notmatch '^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') {
+              throw "Tag '$env:REF_NAME' is not a valid release tag (expected vX.Y.Z or vX.Y.Z-suffix)"
+            }
+            $v = $env:REF_NAME -replace '^v', ''
+          } else {
+            $v = "0.0.0-ci.$env:RUN_NUMBER"
+          }
           "value=$v" >> $env:GITHUB_OUTPUT
 
       - name: Publish app
-        run: dotnet publish src/WinTools.App -c Release -r win-x64 -p:Version=${{ steps.version.outputs.value }} -o artifacts/publish
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: dotnet publish src/WinTools.App -c Release -r win-x64 "-p:Version=$env:VERSION" -o artifacts/publish
 
       - name: Locate or install Inno Setup
         shell: pwsh
@@ -94,8 +104,10 @@ jobs:
 
       - name: Build installer
         shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
         run: |
-          & $env:ISCC "/DAppVersion=${{ steps.version.outputs.value }}" "/DPublishDir=$PWD\artifacts\publish" installer\win-tools.iss
+          & $env:ISCC "/DAppVersion=$env:VERSION" "/DPublishDir=$PWD\artifacts\publish" installer\win-tools.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Checksum
