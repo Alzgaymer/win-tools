@@ -7,11 +7,16 @@ namespace WinTools.App;
 
 public partial class App : Application
 {
+    private readonly bool _startHidden;
     private FlyoutWindow? _flyout;
     private TrayIcon? _tray;
     private HotkeyListener? _hotkeys;
 
-    public App() => InitializeComponent();
+    public App(bool startHidden)
+    {
+        _startHidden = startHidden;
+        InitializeComponent();
+    }
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
@@ -31,6 +36,11 @@ public partial class App : Application
 
         // A second launch (e.g. from the Start menu) is redirected here by Program.Main.
         AppInstance.GetCurrent().Activated += (_, _) => flyout.DispatcherQueue.TryEnqueue(flyout.ShowFlyout);
+
+        if (!_startHidden)
+        {
+            flyout.ShowFlyout();
+        }
 
         await flyout.BrightnessSection.LoadAsync();
     }

@@ -37,7 +37,7 @@ Name: "{autoprograms}\WinTools"; Filename: "{app}\WinTools.exe"
 
 [Registry]
 ; Start with Windows (installer checkbox). The app's tray menu toggles the same value.
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "WinTools"; ValueData: """{app}\WinTools.exe"""; Tasks: startup
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "WinTools"; ValueData: """{app}\WinTools.exe"" --startup"; Tasks: startup
 ; Always remove it on uninstall, even if it was enabled later from the tray menu.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "WinTools"; Flags: uninsdeletevalue
 ; Remove the Rust version's startup entry.

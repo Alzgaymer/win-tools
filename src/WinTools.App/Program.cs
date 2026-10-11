@@ -9,7 +9,7 @@ public static class Program
     private const string InstanceKey = "WinTools";
 
     [STAThread]
-    private static int Main()
+    private static int Main(string[] args)
     {
         WinRT.ComWrappersSupport.InitializeComWrappers();
         if (RedirectedToRunningInstance())
@@ -21,7 +21,7 @@ public static class Program
         {
             SynchronizationContext.SetSynchronizationContext(
                 new DispatcherQueueSynchronizationContext(DispatcherQueue.GetForCurrentThread()));
-            _ = new App();
+            _ = new App(startHidden: args.Contains("--startup", StringComparer.OrdinalIgnoreCase));
         });
         return 0;
     }
