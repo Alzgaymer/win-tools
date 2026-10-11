@@ -113,9 +113,11 @@ jobs:
       - name: Checksum
         shell: pwsh
         run: |
-          Get-ChildItem artifacts/installer/*.exe |
-            ForEach-Object { "$((Get-FileHash $_ -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
-            Set-Content artifacts/installer/checksums.txt
+          $lines = Get-ChildItem artifacts/installer/*.exe |
+            ForEach-Object { "$((Get-FileHash $_ -Algorithm SHA256).Hash.ToLower())  $($_.Name)" }
+          # LF endings, UTF-8 without BOM, so sha256sum -c works on Linux and macOS.
+          $text = ($lines -join "`n") + "`n"
+          [IO.File]::WriteAllText((Join-Path $PWD 'artifacts/installer/checksums.txt'), $text)
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

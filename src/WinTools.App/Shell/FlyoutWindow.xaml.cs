@@ -66,6 +66,7 @@ public sealed partial class FlyoutWindow : Window
         AppWindow.Show();
         Activate();
         WindowFocus.BringToFront(Hwnd);
+        Root.Focus(FocusState.Programmatic);
         _ = BrightnessSection.RefreshAsync();
     }
 
@@ -85,7 +86,13 @@ public sealed partial class FlyoutWindow : Window
             new PixelRect(area.X, area.Y, area.Width, area.Height),
             DisplayScale.ForPrimaryMonitor(),
             contentHeight);
-        AppWindow.MoveAndResize(new RectInt32(rect.X, rect.Y, rect.Width, rect.Height));
+
+        // BottomRight yields the client rect; MoveAndResize takes the outer rect, so grow it by the
+        // border so the client area matches the content height (no scrollbar) and the outer window
+        // still ends at the margin.
+        var dw = AppWindow.Size.Width - AppWindow.ClientSize.Width;
+        var dh = AppWindow.Size.Height - AppWindow.ClientSize.Height;
+        AppWindow.MoveAndResize(new RectInt32(rect.X - dw, rect.Y - dh, rect.Width + dw, rect.Height + dh));
     }
 
     private void OnActivated(object sender, WindowActivatedEventArgs args)

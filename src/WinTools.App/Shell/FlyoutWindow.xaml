@@ -5,7 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:brightness="using:WinTools.App.Features.Brightness"
     Title="WinTools">
-    <Grid x:Name="Root">
+    <Grid x:Name="Root" IsTabStop="True" UseSystemFocusVisuals="False">
         <Grid.KeyboardAccelerators>
             <KeyboardAccelerator Key="Escape" Invoked="OnEscape" />
         </Grid.KeyboardAccelerators>
