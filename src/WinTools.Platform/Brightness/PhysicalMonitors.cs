@@ -36,8 +36,8 @@ public static class PhysicalMonitors
 
     public static unsafe uint? TryGetBrightness(nint handle)
     {
-        uint current;
-        var ok = PInvoke.GetMonitorBrightness((HANDLE)handle, null, &current, null) != 0;
+        uint min, current, max;
+        var ok = PInvoke.GetMonitorBrightness((HANDLE)handle, &min, &current, &max) != 0;
         return ok ? Math.Clamp(current, 1u, 100u) : null;
     }
 
