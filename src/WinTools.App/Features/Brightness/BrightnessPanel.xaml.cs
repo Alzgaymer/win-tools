@@ -81,7 +81,8 @@ public sealed partial class BrightnessPanel : UserControl
         {
             await monitor.DisposeAsync();
         }
-        PhysicalMonitors.Destroy(old.Select(m => m.Handle));
+        var handles = old.Select(m => m.Handle).ToArray();
+        await Task.Run(() => PhysicalMonitors.Destroy(handles));
     }
 
     private async Task Serialized(Func<Task> action)
