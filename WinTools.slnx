@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/WinTools.Core/WinTools.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WinTools.Core.Tests/WinTools.Core.Tests.csproj" />
+  </Folder>
+</Solution>

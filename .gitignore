@@ -1,3 +1,8 @@
 /target
+bin/
+obj/
+artifacts/
+.vs/
+*.user
 .idea
 .claude
