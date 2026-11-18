@@ -16,6 +16,10 @@
             <MenuFlyout AreOpenCloseAnimationsEnabled="False" Opening="OnMenuOpening">
                 <ToggleMenuFlyoutItem x:Name="StartupItem" Text="Start with Windows" Click="OnStartupClick" />
                 <MenuFlyoutSeparator />
+                <ToggleMenuFlyoutItem x:Name="GlyphAndBarItem" Text="Battery icons: device + level bar" Click="OnGlyphAndBarClick" />
+                <ToggleMenuFlyoutItem x:Name="PercentItem" Text="Battery icons: percentage" Click="OnPercentClick" />
+                <ToggleMenuFlyoutItem x:Name="GlyphOnlyItem" Text="Battery icons: device" Click="OnGlyphOnlyClick" />
+                <MenuFlyoutSeparator />
                 <MenuFlyoutItem Text="Quit" Click="OnQuitClick" />
             </MenuFlyout>
         </tb:TaskbarIcon.ContextFlyout>

@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
+using WinTools.App.Features.Battery;
 using WinTools.App.Shell;
 using WinTools.Platform.Shell;
 
@@ -11,6 +12,7 @@ public partial class App : Application
     private FlyoutWindow? _flyout;
     private TrayIcon? _tray;
     private HotkeyListener? _hotkeys;
+    private BatteryTrayIcons? _batteryIcons;
 
     public App(bool startHidden)
     {
@@ -42,6 +44,11 @@ public partial class App : Application
             flyout.ShowFlyout();
         }
 
+        _batteryIcons = new BatteryTrayIcons(flyout.DispatcherQueue);
+        _batteryIcons.ToggleRequested += flyout.Toggle;
+        _tray.BatteryIconStyleRequested += style => _batteryIcons.Style = style;
+        _ = _batteryIcons.StartAsync();
+
         await flyout.BrightnessSection.LoadAsync();
     }
 
@@ -57,6 +64,7 @@ public partial class App : Application
         }
         finally
         {
+            _batteryIcons?.Dispose();
             _tray?.Dispose();
             _flyout?.CloseForQuit();
             Exit();

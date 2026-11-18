@@ -21,3 +21,15 @@ WM_DISPLAYCHANGE
 MonitorFromPoint
 GetDpiForMonitor
 SetForegroundWindow
+CM_Get_Device_Interface_List_Size
+CM_Get_Device_Interface_List
+HidD_GetHidGuid
+HidD_GetAttributes
+HidD_GetPreparsedData
+HidD_FreePreparsedData
+HidP_GetCaps
+HidD_GetProductString
+HidD_SetFeature
+HidD_GetFeature
+CreateFile
+DestroyIcon

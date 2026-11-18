@@ -40,6 +40,8 @@ Name: "{autoprograms}\WinTools"; Filename: "{app}\WinTools.exe"
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "WinTools"; ValueData: """{app}\WinTools.exe"" --startup"; Tasks: startup
 ; Always remove it on uninstall, even if it was enabled later from the tray menu.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "WinTools"; Flags: uninsdeletevalue
+; App preferences (battery icon style).
+Root: HKCU; Subkey: "Software\WinTools"; Flags: uninsdeletekey dontcreatekey
 ; Remove the Rust version's startup entry.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "BrightnessCtrl"; Flags: deletevalue
 
